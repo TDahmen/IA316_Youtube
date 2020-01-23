@@ -2,5 +2,5 @@
 
 IA316 Youtube Project (2020)
 
-Paul Chevalier
+Paul Chevalier -
 Thomas Dahmen
