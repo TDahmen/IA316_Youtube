@@ -38,9 +38,9 @@ class YoutubeEnv:
         for v in channel.videos:
             self.videos[v.video_id] = v
 
-    def reset(self, seed=0):
+    def reset(self, seed: int = 0):
         self.state = {"current_user": 0}
-        self.seed = seed
+        self.rng = np.random.RandomState(seed)
 
     def step(self):
         pass

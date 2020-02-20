@@ -1,8 +1,11 @@
 import numpy as np
+from scipy.spatial.distance import cosine
 
 from videos import Video
 from channels import Channel
 
+
+cosine_sim = lambda u, v: 1 - cosine(u, v)  # redefine cosine distance as cosine similarity
 
 class User:
 
@@ -42,6 +45,11 @@ class User:
 
     def watch(self, video: Video):
         """ Returns a random watch time of a video based on personal tastes and video keywords """
-        pass
+        sim = cosine_sim(self.tastes, video.keywords)  # cosine similarity, mean of the random draw
+        # var = (sim * (1 - sim)) / 2  # variance of the random draw
+        alpha = sim
+        beta = 1 - sim
+        watch_time = self.rng.beta(alpha, beta)
+        return watch_time
 
 
