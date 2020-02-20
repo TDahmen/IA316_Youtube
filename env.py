@@ -45,9 +45,50 @@ class YoutubeEnv:
     def step(self):
         pass
 
+    @staticmethod
+    def random_env(nb_tastes: int = 100, nb_users: int = 10, tu_ratio: int = 3, nb_channels: int = 10, vc_ratio: int = 3, seed: int = 0):
+        """ Returns a random environment.
+        :param nb_tastes: total number of possible tastes
+        :param nb_users: int, number of users
+        :param tu_ratio: int, number of tastes per user
+        :param nb_channels: int, number of channels
+        :param vc_ratio: int, number of videos per channel
+        :param seed: int, random seed to use
+        """
 
-u = User()
-c = Channel()
-print(type([u]))
-env = YoutubeEnv(users=[u], channels=[c], seed=1)
-print("ok")
+        # Type-checking
+        if not isinstance(nb_users, int):
+            raise TypeError
+        if not isinstance(tu_ratio, int):
+            raise TypeError
+        if not isinstance(nb_channels, int):
+            raise TypeError
+        if not isinstance(vc_ratio, int):
+            raise TypeError
+        if not isinstance(seed, int):
+            raise TypeError
+
+        users = []
+        channels = []
+        seed_0 = seed
+
+        for _ in range(nb_users):
+            seed += 1
+            users.append(User.random_user(nb_tastes, tu_ratio, seed))
+
+        for channel_id in range(nb_channels):
+            channels.append(Channel.random_channel(nb_tastes, vc_ratio, channel_id))
+
+        return YoutubeEnv(users, channels, seed_0)
+
+
+seed = 0
+env = YoutubeEnv.random_env(seed=seed)
+
+# for video_id, video in env.videos.items():
+#     print("video_id = {}, video.keywords = {}\n".format(video_id, video.keywords))
+
+u = env.users[0]
+c = env.channels[0]
+for v in c.videos:
+    print(u.watch(v))

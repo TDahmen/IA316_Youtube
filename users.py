@@ -7,6 +7,7 @@ from channels import Channel
 
 cosine_sim = lambda u, v: 1 - cosine(u, v)  # redefine cosine distance as cosine similarity
 
+
 class User:
 
     def __init__(self, tastes: np.ndarray = np.array([], dtype=np.float), seed: int = 0):
@@ -52,4 +53,21 @@ class User:
         watch_time = self.rng.beta(alpha, beta)
         return watch_time
 
+    @staticmethod
+    def random_user(nb_tastes: int = 1, tu_ratio: int = 1, seed: int = 0):
+        """ Returns a user with random tastes
+        :param nb_tastes: int or tuple of ints, specifying the total number of tastes possible
+        :param tu_ratio: int, specifying a number of non-zeros tastes for the user
+        :param seed: int, random seed to use
+        """
 
+        # Type-checking
+        if not isinstance(nb_tastes, int):
+            raise TypeError
+        if not isinstance(tu_ratio, int):
+            raise TypeError
+
+        tastes_idx = np.random.choice(np.arange(nb_tastes), size=tu_ratio, replace=False)
+        tastes = np.zeros(nb_tastes, dtype=np.float)
+        tastes[tastes_idx] = np.random.uniform(0.8, 1, size=tu_ratio)  # random tastes between 0.8 and 1
+        return User(tastes, seed)
