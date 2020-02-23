@@ -17,21 +17,21 @@ class YoutubeEnv:
         if not isinstance(seed, int):
             raise TypeError
 
-        self.users = users
+        self.users = {u.user_id: u for u in users}
         self.channels = channels
         self.rng = np.random.RandomState(seed)  # random number generator
 
         self.nb_users = len(users)
-        self.keywords = np.array([u.tastes for u in users])
+        self.keywords = np.array([u.keywords for u in users])
         self.videos = [v for c in channels for v in c.videos]
         self.videos = {v.video_id: v for v in self.videos}
 
         self.state = {"current_user": 0}
 
     def add_user(self, user):
-        self.users.append(user)
+        self.users[user.user_id] = user
         self.nb_users += 1
-        self.keywords = np.vstack([self.keywords, user.tastes])
+        self.keywords = np.vstack([self.keywords, user.keywords])
 
     def add_channel(self, channel):
         self.channels.append(channel)
@@ -42,28 +42,32 @@ class YoutubeEnv:
         self.state = {"current_user": 0}
         self.rng = np.random.RandomState(seed)
 
-    def step(self):
+    def step(self):  # TODO: define this
         pass
 
     @staticmethod
-    def random_env(nb_tastes: int = 100, nb_users: int = 10, tu_ratio: int = 3, nb_channels: int = 10, vc_ratio: int = 3, seed: int = 0):
+    def random_env(nb_keywords: int = 10, nb_users: int = 10, ku_ratio: int = 3,
+                   nb_channels: int = 10, vc_ratio: int = 3, kv_ratio: int = 3, seed: int = 0):
         """ Returns a random environment.
-        :param nb_tastes: total number of possible tastes
+        :param nb_keywords: total number of possible keywords
         :param nb_users: int, number of users
-        :param tu_ratio: int, number of tastes per user
+        :param ku_ratio: int, number of keywords per user
         :param nb_channels: int, number of channels
         :param vc_ratio: int, number of videos per channel
+        :param kv_ratio: int, number of keywords per video
         :param seed: int, random seed to use
         """
 
         # Type-checking
         if not isinstance(nb_users, int):
             raise TypeError
-        if not isinstance(tu_ratio, int):
+        if not isinstance(ku_ratio, int):
             raise TypeError
         if not isinstance(nb_channels, int):
             raise TypeError
         if not isinstance(vc_ratio, int):
+            raise TypeError
+        if not isinstance(kv_ratio, int):
             raise TypeError
         if not isinstance(seed, int):
             raise TypeError
@@ -72,12 +76,12 @@ class YoutubeEnv:
         channels = []
         seed_0 = seed
 
-        for _ in range(nb_users):
+        for user_id in range(nb_users):
             seed += 1
-            users.append(User.random_user(nb_tastes, tu_ratio, seed))
+            users.append(User.random_user(nb_keywords, ku_ratio, user_id, seed))
 
         for channel_id in range(nb_channels):
-            channels.append(Channel.random_channel(nb_tastes, vc_ratio, channel_id))
+            channels.append(Channel.random_channel(nb_keywords, vc_ratio, kv_ratio, channel_id))
 
         return YoutubeEnv(users, channels, seed_0)
 

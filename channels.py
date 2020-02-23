@@ -18,17 +18,20 @@ class Channel:
         self.channel_id = channel_id  # supposed to be a unique identifier amongst all channels
 
     @staticmethod
-    def random_channel(shape: int = 1, nb_videos: int = 1, channel_id: int = 0):
+    def random_channel(nb_keywords: int = 1, nb_videos: int = 1, kv_ratio: int = 1, channel_id: int = 0):
         """ Returns a channel of random videos, all similar to a base random video
-        :param shape: int or tuple of ints, specifying the shape of the keywords parameter
+        :param nb_keywords: int or tuple of ints, specifying the length of the keywords parameter
         :param nb_videos: int, specifying the number of videos on the channel
+        :param kv_ratio: int, number of keywords per video
         :param channel_id: int, unique identifier amongst all channels
         """
 
         # Type-checking
-        if not isinstance(shape, int):
+        if not isinstance(nb_keywords, int):
             raise TypeError
         if not isinstance(nb_videos, int):
+            raise TypeError
+        if not isinstance(kv_ratio, int):
             raise TypeError
         if not isinstance(channel_id, int):
             raise TypeError
@@ -38,13 +41,13 @@ class Channel:
         if nb_videos > 0:
 
             video_id = channel_id * 10**3
-            base_video = Video.random_video(shape, video_id, channel_id)
+            base_video = Video.random_video(nb_keywords, kv_ratio, video_id, channel_id)
             videos.append(base_video)
             base_keywords = base_video.keywords
 
             for i in range(nb_videos - 1):
                 switch_proba = 0.1
-                switch = np.random.uniform(0, 1, size=shape)
+                switch = np.random.uniform(0, 1, size=nb_keywords)
                 switch = np.asarray(switch < switch_proba, dtype=np.float)  # bernoulli sampling, p << 0.5
                 keywords = np.logical_xor(base_keywords, switch)
                 keywords = np.asarray(keywords, dtype=np.float)

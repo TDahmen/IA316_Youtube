@@ -20,20 +20,23 @@ class Video:
         self.channel_id = channel_id  # supposed to be a unique identifier amongst all channels
 
     @staticmethod
-    def random_video(shape: int = 1, video_id: int = 0, channel_id: int = 0):
+    def random_video(nb_keywords: int = 1, kv_ratio: int = 1, video_id: int = 0, channel_id: int = 0):
         """ Returns a video with random keywords
-        :param shape: int or tuple of ints, specifying the shape of the keywords parameter
+        :param nb_keywords: int or tuple of ints, specifying the length of the keywords parameter
+        :param kv_ratio: int, specifying a number of non-zeros keywords for the video
         :param video_id: int, unique identifier amongst all videos
         :param channel_id: int, unique identifier amongst all channels
         """
 
         # Type-checking
-        if not isinstance(shape, int):
+        if not isinstance(nb_keywords, int):
             raise TypeError
+        if not isinstance(kv_ratio, int):
+            raise TypeError
+        # Assertion checking
+        assert kv_ratio <= nb_keywords
 
-        keywords = np.random.uniform(0, 1, size=shape)  # random tastes
-        keywords = np.asarray(keywords < 0.5, dtype=np.float)  # bernoulli sampling, p = 0.5
+        keywords_idx = np.random.choice(np.arange(nb_keywords), size=kv_ratio, replace=False)
+        keywords = np.zeros(nb_keywords, dtype=np.float)
+        keywords[keywords_idx] = 1.  # non-zeros keywords for the video
         return Video(keywords, video_id, channel_id)
-
-
-
