@@ -86,13 +86,13 @@ class YoutubeEnv:
         return YoutubeEnv(users, channels, seed_0)
 
 
-seed = 0
-env = YoutubeEnv.random_env(seed=seed)
+#seed = 0
+#env = YoutubeEnv.random_env(seed=seed)
 
 # for video_id, video in env.videos.items():
 #     print("video_id = {}, video.keywords = {}\n".format(video_id, video.keywords))
 
-u = env.users[0]
-c = env.channels[0]
-for v in c.videos:
-    print(u.watch(v))
+#u = env.users[0]
+#c = env.channels[0]
+#for v in c.videos:
+#    print(u.watch(v))
