@@ -54,10 +54,11 @@ class YoutubeEnv:
         for u in self.users.values():
             u.history = []
             u.keywords = u.original_keywords
+            u.rng = np.random.RandomState(u.original_seed + seed)
 
     def step(self):
         """ Chooses a user at random and returns it """
-        return np.random.choice(list(self.users.values()))
+        return self.rng.choice(list(self.users.values()))
 
     def update(self, user: User, video: Video, watch_time: float, gamma: float = 0.05):
         """ Updates the environment

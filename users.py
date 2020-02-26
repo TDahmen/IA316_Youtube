@@ -40,6 +40,7 @@ class User:
         # self.to_watch_later_playlist = set()
         # self.channels_suscribed = set()
         self.rng = np.random.RandomState(seed)  # random number generator
+        self.original_seed = seed
 
     def add_to_history(self, video_id: int = 0, watch_time: float = 0.):
 
