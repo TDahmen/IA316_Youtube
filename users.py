@@ -68,7 +68,7 @@ class User:
         if not isinstance(gamma, float):
             raise TypeError
 
-        if np.random.uniform() < watch_time:  # bernoulli sampling with p = watch_time
+        if self.rng.uniform() < watch_time:  # bernoulli sampling with p = watch_time
             # fluctuate tastes around original tastes, current tastes and video content
             keywords = self.original_keywords + self.keywords + gamma * video.keywords
             keywords = keywords / np.sum(keywords)
