@@ -51,16 +51,20 @@ class YoutubeEnv:
     def reset(self, seed: int = 0):
         self.state = {"current_user": 0}
         self.rng = np.random.RandomState(seed)
+        for u in self.users.values():
+            u.history = []
+            u.keywords = u.original_keywords
 
     def step(self):
         """ Chooses a user at random and returns it """
         return np.random.choice(list(self.users.values()))
 
-    def update(self, user: User, video: Video, watch_time: float):
+    def update(self, user: User, video: Video, watch_time: float, gamma: float = 0.05):
         """ Updates the environment
         :param user: user
         :param video: video recommended to the user
         :param watch_time: effective watch time of the video by the user
+        :param gamma: evolution parameter (learning rate)
         """
 
         # Type-checking
@@ -70,10 +74,12 @@ class YoutubeEnv:
             raise TypeError
         if not isinstance(watch_time, float):
             raise TypeError
+        if not isinstance(gamma, float):
+            raise TypeError
 
         user.add_to_history(video.video_id, watch_time)  # history update
         if self.evolutive:  # if the environment is evolutive,
-            user.evolve(video, watch_time)  # the user tastes can evolve
+            user.evolve(video, watch_time, gamma)  # the user tastes can evolve
 
     @staticmethod
     def random_env(nb_keywords: int = 10, nb_users: int = 10, ku_ratio: int = 3,

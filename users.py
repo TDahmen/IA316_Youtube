@@ -51,7 +51,7 @@ class User:
 
         self.history.append((video_id, watch_time))
 
-    def evolve(self, video: Video, watch_time: float = 0., gamma=0.05):
+    def evolve(self, video: Video, watch_time: float = 0., gamma: float = 0.05):
         """
         Models the evolution of taste
         :param video: Video, video watched by the user
@@ -64,6 +64,8 @@ class User:
         if not isinstance(video, Video):
             raise TypeError
         if not isinstance(watch_time, float):
+            raise TypeError
+        if not isinstance(gamma, float):
             raise TypeError
 
         if np.random.uniform() < watch_time:  # bernoulli sampling with p = watch_time
@@ -92,7 +94,6 @@ class User:
             raise TypeError
 
         sim = cosine_sim(self.keywords, video.keywords)  # cosine similarity, mean of the random draw
-        print("sim : ", sim)
 
         # var = (sim * (1 - sim)) / 2  # variance of the random draw
         # alpha = sim
