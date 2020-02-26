@@ -15,6 +15,9 @@ class Video:
         if not isinstance(channel_id, int):
             raise TypeError
 
+        # Normalization
+        keywords = keywords / np.sum(keywords)
+
         self.keywords = keywords
         self.video_id = video_id  # supposed to be a unique identifier amongst all videos
         self.channel_id = channel_id  # supposed to be a unique identifier amongst all channels

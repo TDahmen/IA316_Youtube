@@ -2,7 +2,7 @@ import numpy as np
 from scipy.spatial.distance import cosine
 
 from videos import Video
-from channels import Channel
+# from channels import Channel
 
 
 def cosine_sim(u, v):
@@ -28,33 +28,69 @@ class User:
         if not isinstance(seed, int):
             raise TypeError
 
-        # Normalization check
-        if not all(x >= 0 and x <= 1 for x in keywords):
-            raise AssertionError(
-                "keywords argument given for initialization of User object should have entries in [0 ,1]")
+        # Normalization
+        keywords = keywords / np.sum(keywords)
 
         self.keywords = keywords
+        self.original_keywords = keywords
         self.user_id = user_id
-        self.videos_liked = set()
-        self.videos_disliked = set()
-        self.to_watch_later_playlist = set()
-        self.channels_suscribed = set()
+        self.history = list()  # list of tuples (video_id, watch_time) of videos watched in the past
+        # self.videos_liked = set()
+        # self.videos_disliked = set()
+        # self.to_watch_later_playlist = set()
+        # self.channels_suscribed = set()
         self.rng = np.random.RandomState(seed)  # random number generator
 
-    def like(self, video: Video):
-        self.videos_liked.add(video.video_id)
+    def add_to_history(self, video_id: int = 0, watch_time: float = 0.):
 
-    def dislike(self, video: Video):
-        self.videos_disliked.add(video.video_id)
+        # type-checking
+        if not isinstance(video_id, int):
+            raise TypeError
+        if not isinstance(watch_time, float):
+            raise TypeError
 
-    def watch_later(self, video: Video):
-        self.to_watch_later_playlist.add(video.video_id)
+        self.history.append((video_id, watch_time))
 
-    def suscribe(self, channel: Channel):
-        self.channels_suscribed.add(channel.channel_id)
+    def evolve(self, video: Video, watch_time: float = 0., gamma=0.05):
+        """
+        Models the evolution of taste
+        :param video: Video, video watched by the user
+        :param watch_time: effective watch time of the video by the user
+        :param gamma: evolution parameter (learning rate)
+        :return:
+        """
+
+        # type-checking
+        if not isinstance(video, Video):
+            raise TypeError
+        if not isinstance(watch_time, float):
+            raise TypeError
+
+        if np.random.uniform() < watch_time:  # bernoulli sampling with p = watch_time
+            # fluctuate tastes around original tastes, current tastes and video content
+            keywords = self.original_keywords + self.keywords + gamma * video.keywords
+            keywords = keywords / np.sum(keywords)
+            self.keywords = keywords  # evolution of taste
+
+    # def like(self, video: Video):
+    #     self.videos_liked.add(video.video_id)
+
+    # def dislike(self, video: Video):
+    #     self.videos_disliked.add(video.video_id)
+
+    # def watch_later(self, video: Video):
+    #     self.to_watch_later_playlist.add(video.video_id)
+
+    # def suscribe(self, channel: Channel):
+    #     self.channels_suscribed.add(channel.channel_id)
 
     def watch(self, video: Video):
         """ Returns a random watch time of a video based on personal keywords and video keywords """
+
+        # Type-checking
+        if not isinstance(video, Video):
+            raise TypeError
+
         sim = cosine_sim(self.keywords, video.keywords)  # cosine similarity, mean of the random draw
         print("sim : ", sim)
 
