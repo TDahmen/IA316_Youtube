@@ -2,11 +2,20 @@ import numpy as np
 import random
 import matplotlib.pyplot as plt
 
+from scipy.spatial.distance import cosine
+
 from users import User
 from channels import Channel, Video
 from typing import List
 from env import YoutubeEnv
 
+def cosine_sim(u, v):
+    """ Redefine cosine distance as cosine similarity, with numerical stability """
+    sim = 1 - cosine(u, v)
+    epsilon = 10e-8
+    sim = max(epsilon, sim)
+    sim = min(1 - epsilon, sim)
+    return sim
 
 class Agent:
 
@@ -35,6 +44,18 @@ class Agent:
             samples = np.random.normal(cum_rewards / (nb_tries + 1), 1. / (nb_tries + 1))
         return np.argmax(samples)
 
+    def eps_greedy(self, nb_tries, cum_rewards, param=None):
+        if param == None:
+            eps = 0.1
+        else:
+            eps = float(param)
+        k = np.shape(nb_tries)[0]
+        if np.sum(nb_tries) == 0 or np.random.random() < eps:
+            return np.random.randint(k)
+        else:
+            index = np.where(nb_tries > 0)[0]
+            return index[np.argmax(cum_rewards[index] / nb_tries[index])]
+
     def thompson_sim(self, time_horizon, prior = None):
         k = len(self.actions)
         nb_tries = np.zeros(k, int)
@@ -43,6 +64,25 @@ class Agent:
         reward_seq = []
         for t in range(time_horizon):
             a = self.thompson(nb_tries, cum_rewards, prior)
+            r = self.user.watch(self.actions[a])
+            if self.env.evolutive:
+                env.update(self.user, self.actions[a], r)
+            nb_tries[a] += 1
+            cum_rewards[a] += r
+            action_seq.append(a)
+            reward_seq.append(r)
+        index = np.where(nb_tries > 0)[0]
+        best_action = index[np.argmax(cum_rewards[index] / nb_tries[index])]
+        return action_seq, reward_seq
+
+    def eps_greedy_sim(self, time_horizon, prior = None):
+        k = len(self.actions)
+        nb_tries = np.zeros(k, int)
+        cum_rewards = np.zeros(k, float)
+        action_seq = []
+        reward_seq = []
+        for t in range(time_horizon):
+            a = self.eps_greedy(nb_tries, cum_rewards, prior)
             r = self.user.watch(self.actions[a])
             if self.env.evolutive:
                 env.update(self.user, self.actions[a], r)
@@ -98,16 +138,28 @@ class Agent:
         return best_action, best_reward
 
 
+    def get_best_action_sim(self):
+        best_action, best_sim = (0, 0)
+        for i in range(len(self.actions)):
+            sim = cosine_sim(self.user.keywords, self.actions[i].keywords)
+            if sim > best_sim:
+                best_action = i
+                best_sim = sim
+        return best_action, best_sim
 
-env = YoutubeEnv.random_env(seed=42)
+
+
+env = YoutubeEnv.random_env(seed=420)
 user = env.users[0]
 
 agent = Agent(user, env)
 
-thompsonRes = agent.thompson_sim(300)
-qlearningRes = agent.qlearning_sim(300)
+thompsonRes = agent.thompson_sim(500, prior = 'beta')
+epsGreedyRes = agent.eps_greedy_sim(500)
+qlearningRes = agent.qlearning_sim(500, alpha = 0.7, gamma = 0.4, epsilon = 0.3)
 
 bestAction = agent.get_best_action()
+bestActionSim = agent.get_best_action_sim()
 
 ## Fonctions outil
 
@@ -135,12 +187,32 @@ def show_metrics(metrics, time_horizon):
 print("cumRegret Thompson : ")
 
 regretThompson = get_regret(*thompsonRes, *bestAction)
-show_metrics(regretThompson, 300)
+show_metrics(regretThompson, 500)
+
+print("cumRegret with cosine similarity Thompson : ")
+
+regretThompson = get_regret(*thompsonRes, *bestActionSim)
+show_metrics(regretThompson, 500)
+
+print("cumRegret Epsilon Greedy : ")
+
+regretEpsGreedy = get_regret(*epsGreedyRes, *bestAction)
+show_metrics(regretEpsGreedy, 500)
+
+print("cumRegret with cosine similarity Epsilon Greedy : ")
+
+regretEpsGreedy = get_regret(*epsGreedyRes, *bestActionSim)
+show_metrics(regretEpsGreedy, 500)
 
 print("cumRegret qlearning : ")
 
 regretQlearning = get_regret(*qlearningRes, *bestAction)
-show_metrics(regretQlearning, 300)
+show_metrics(regretQlearning, 500)
+
+print("cumRegret with cosine similarity qlearning : ")
+
+regretQlearning = get_regret(*qlearningRes, *bestActionSim)
+show_metrics(regretQlearning, 500)
 
 
 
