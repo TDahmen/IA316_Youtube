@@ -9,6 +9,7 @@ from channels import Channel, Video
 from typing import List
 from env import YoutubeEnv
 
+
 def cosine_sim(u, v):
     """ Redefine cosine distance as cosine similarity, with numerical stability """
     sim = 1 - cosine(u, v)
@@ -66,7 +67,7 @@ class Agent:
             a = self.thompson(nb_tries, cum_rewards, prior)
             r = self.user.watch(self.actions[a])
             if self.env.evolutive:
-                env.update(self.user, self.actions[a], r)
+                self.env.update(self.user, self.actions[a], r)
             nb_tries[a] += 1
             cum_rewards[a] += r
             action_seq.append(a)
@@ -85,7 +86,7 @@ class Agent:
             a = self.eps_greedy(nb_tries, cum_rewards, prior)
             r = self.user.watch(self.actions[a])
             if self.env.evolutive:
-                env.update(self.user, self.actions[a], r)
+                self.env.update(self.user, self.actions[a], r)
             nb_tries[a] += 1
             cum_rewards[a] += r
             action_seq.append(a)
@@ -109,8 +110,9 @@ class Agent:
                 action = random.sample([i for i in range(0, len(self.actions))], 1)[0] # Explore action space
             else:
                 action = np.argmax(q_table) # Exploit learned values
-            print(action)
-            reward = self.user.watch(self.actions[action]) 
+            reward = self.user.watch(self.actions[action])
+            if self.env.evolutive:
+                self.env.update(self.user, self.actions[action], reward)
             
             old_value = q_table[action]
             next_max = np.max(q_table)
@@ -147,72 +149,31 @@ class Agent:
                 best_sim = sim
         return best_action, best_sim
 
-
-
-env = YoutubeEnv.random_env(seed=420)
-user = env.users[0]
-
-agent = Agent(user, env)
-
-thompsonRes = agent.thompson_sim(500, prior = 'beta')
-epsGreedyRes = agent.eps_greedy_sim(500)
-qlearningRes = agent.qlearning_sim(500, alpha = 0.7, gamma = 0.4, epsilon = 0.3)
-
-bestAction = agent.get_best_action()
-bestActionSim = agent.get_best_action_sim()
-
 ## Fonctions outil
 
-def get_regret(action_seq, reward_seq, best_actions, best_reward):
-    time_horizon = len(action_seq)
+def get_regret(reward_seq, best_actions, best_reward):
+    time_horizon = len(reward_seq)
     regret = np.zeros(time_horizon, float)
     precision = np.zeros(time_horizon, float)
     for t in range(time_horizon):
         regret[t] = best_reward - reward_seq[t]
     return np.cumsum(regret), precision
 
-def show_metrics(metrics, time_horizon):
+def show_metrics(metrics, titles, time_horizon):
+
     fig, (ax1, ax2) = plt.subplots(1,2,figsize=(12, 4))
+
     ax1.set_xlabel('Time')
     ax1.set_ylabel('Regret')
+    ax1.title.set_text(titles[0])
     ax1.plot(range(time_horizon),metrics[0], color = 'b')
+
     ax2.set_xlabel('Time')
     ax2.set_ylabel('Precision')
     ax2.set_ylim(-0.02,1.02)
+    ax2.title.set_text(titles[1])
     ax2.plot(range(time_horizon),metrics[1], color = 'b')
     plt.show()
-
-##
-
-print("cumRegret Thompson : ")
-
-regretThompson = get_regret(*thompsonRes, *bestAction)
-show_metrics(regretThompson, 500)
-
-print("cumRegret with cosine similarity Thompson : ")
-
-regretThompson = get_regret(*thompsonRes, *bestActionSim)
-show_metrics(regretThompson, 500)
-
-print("cumRegret Epsilon Greedy : ")
-
-regretEpsGreedy = get_regret(*epsGreedyRes, *bestAction)
-show_metrics(regretEpsGreedy, 500)
-
-print("cumRegret with cosine similarity Epsilon Greedy : ")
-
-regretEpsGreedy = get_regret(*epsGreedyRes, *bestActionSim)
-show_metrics(regretEpsGreedy, 500)
-
-print("cumRegret qlearning : ")
-
-regretQlearning = get_regret(*qlearningRes, *bestAction)
-show_metrics(regretQlearning, 500)
-
-print("cumRegret with cosine similarity qlearning : ")
-
-regretQlearning = get_regret(*qlearningRes, *bestActionSim)
-show_metrics(regretQlearning, 500)
 
 
 
